@@ -36,7 +36,6 @@ app.get("/", (_req, res) => {
     version: "1.0.0",
     environment: env.NODE_ENV,
     status: "active",
-    docs: env.ENABLE_SWAGGER ? "/api-docs" : undefined,
   });
 });
 

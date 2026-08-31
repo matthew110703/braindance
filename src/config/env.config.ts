@@ -20,13 +20,6 @@ const envSchema = z.object({
     })
     .min(1, "DATABASE_URL cannot be empty"),
   CORS_ORIGIN: z.string().default("*"),
-  ENABLE_SWAGGER: z
-    .preprocess((val) => {
-      if (typeof val === "boolean") return val;
-      if (typeof val === "string") return val.toLowerCase() === "true";
-      return false;
-    }, z.boolean())
-    .default(false),
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace"])
     .default("info"),
