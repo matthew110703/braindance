@@ -7,7 +7,7 @@ import { httpLogger } from "./config/logger.config.js";
 import { rateLimiter } from "./middleware/rateLimiter.middleware.js";
 import { notFoundMiddleware } from "./middleware/notFound.middleware.js";
 import { errorHandlerMiddleware } from "./middleware/error.middleware.js";
-import rootApiRouter from "./modules/index.js";
+import globalRouter from "./routes/index.js";
 
 const app: Express = express();
 
@@ -39,8 +39,8 @@ app.get("/", (_req, res) => {
   });
 });
 
-// Mount domain API routes
-app.use("/api/v1", rootApiRouter);
+// Mount global organized routes
+app.use(globalRouter);
 
 // Error and 404 handlers
 app.use(notFoundMiddleware);
