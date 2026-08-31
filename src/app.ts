@@ -2,39 +2,48 @@ import express, { Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
-import apiRouter from "./routes/index.js";
-import { notFoundMiddleware } from "./middlewares/notFound.middleware.js";
-import { errorHandlerMiddleware } from "./middlewares/error.middleware.js";
+import { env } from "./config/env.config.js";
+import { httpLogger } from "./config/logger.config.js";
+import { rateLimiter } from "./middleware/rateLimiter.middleware.js";
+import { notFoundMiddleware } from "./middleware/notFound.middleware.js";
+import { errorHandlerMiddleware } from "./middleware/error.middleware.js";
+import rootApiRouter from "./modules/index.js";
 
 const app: Express = express();
 
-// Security and utility middlewares
+// Security middlewares
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "*",
+    origin: env.CORS_ORIGIN,
     credentials: true,
   })
 );
+
+// Logging and performance
+app.use(httpLogger);
 app.use(compression());
+app.use(rateLimiter);
 
 // Body parsing middlewares
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 
-// Routes
-app.use("/api/v1", apiRouter);
-
-// Root route
+// Root welcome route
 app.get("/", (_req, res) => {
   res.json({
     name: "Braindance API",
     version: "1.0.0",
+    environment: env.NODE_ENV,
     status: "active",
+    docs: env.ENABLE_SWAGGER ? "/api-docs" : undefined,
   });
 });
 
-// 404 and Error handling middlewares
+// Mount domain API routes
+app.use("/api/v1", rootApiRouter);
+
+// Error and 404 handlers
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 

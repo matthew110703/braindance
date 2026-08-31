@@ -1,51 +1,55 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { app } from "./app.js";
-import mongoose from "mongoose";
+import { env } from "./config/env.config.js";
+import { connectDB, disconnectDB } from "./config/db.config.js";
+import { logger } from "./config/logger.config.js";
 import { Server } from "http";
-
-const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI;
 
 let server: Server;
 
-const connectDB = async () => {
-  if (!MONGODB_URI) {
-    console.warn("⚠️  MONGODB_URI is not defined in environment variables. Starting server without MongoDB.");
-    return;
-  }
-
+const startServer = async (): Promise<void> => {
   try {
-    const connectionInstance = await mongoose.connect(MONGODB_URI);
-    console.log(`✅ MongoDB connected! Host: ${connectionInstance.connection.host}`);
+    // Initialize Database connection
+    await connectDB();
+
+    // Start HTTP server
+    server = app.listen(env.PORT, () => {
+      logger.info(
+        `🚀 Braindance Server started in [${env.NODE_ENV}] mode at http://localhost:${env.PORT}`
+      );
+    });
   } catch (error) {
-    console.error("❌ MongoDB connection error:", error);
+    logger.fatal({ error }, "❌ Failed to start application server");
+    process.exit(1);
   }
 };
 
-const startServer = async () => {
-  await connectDB();
+// Graceful shutdown handling
+const shutdown = async (signal: string): Promise<void> => {
+  logger.info(`⏳ Received ${signal}. Starting graceful shutdown...`);
 
-  server = app.listen(PORT, () => {
-    console.log(`🚀 Server is running at http://localhost:${PORT}`);
-  });
-};
-
-// Graceful shutdown
-const shutdown = async () => {
-  console.log("\n⏳ Gracefully shutting down...");
   if (server) {
     server.close(() => {
-      console.log("🔒 HTTP server closed.");
+      logger.info("🔒 HTTP server closed.");
     });
   }
-  await mongoose.connection.close(false);
-  console.log("🔒 MongoDB connection closed.");
+
+  await disconnectDB();
+  logger.info("👋 Process terminated successfully.");
   process.exit(0);
 };
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+// Global unhandled promise rejection and exception catchers
+process.on("unhandledRejection", (reason: any) => {
+  logger.fatal({ reason }, "💥 Unhandled Rejection detected");
+  process.exit(1);
+});
+
+process.on("uncaughtException", (error: Error) => {
+  logger.fatal({ error }, "💥 Uncaught Exception thrown");
+  process.exit(1);
+});
 
 startServer();

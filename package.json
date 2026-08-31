@@ -7,11 +7,11 @@
   "scripts": {
     "dev:server": "tsx watch src/server.ts",
     "dev:types": "tsc --noEmit --watch --preserveWatchOutput",
-    "dev": "concurrently -n \"SERVER,TYPES\" -c \"green,blue\" \"npm run dev:server\" \"npm run dev:types\"",
+    "dev": "concurrently -n \"SERVER,TYPES\" -c \"green,blue\" \"pnpm run dev:server\" \"pnpm run dev:types\"",
     "typecheck": "tsc --noEmit",
     "build:clean": "rimraf dist",
     "build:js": "swc src -d dist --strip-leading-paths",
-    "build": "npm run build:clean && npm run typecheck && npm run build:js",
+    "build": "pnpm run build:clean && pnpm run typecheck && pnpm run build:js",
     "start": "node dist/server.js"
   },
   "keywords": [],
@@ -22,8 +22,12 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
-    "mongoose": "^9.2.4"
+    "mongoose": "^9.2.4",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@swc/cli": "^0.7.1",
@@ -33,6 +37,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.0",
     "concurrently": "^9.2.1",
+    "pino-pretty": "^13.0.0",
     "rimraf": "^6.1.2",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2"
