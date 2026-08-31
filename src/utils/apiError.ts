@@ -1,13 +1,13 @@
 export class ApiError extends Error {
   statusCode: number;
-  data: any;
+  data: unknown;
   success: boolean;
-  errors: any[];
+  errors: string[] | Record<string, unknown>;
 
   constructor(
     statusCode: number,
     message: string = "Something went wrong",
-    errors: any[] = [],
+    errors: string[] | Record<string, unknown> = [],
     stack: string = ""
   ) {
     super(message);

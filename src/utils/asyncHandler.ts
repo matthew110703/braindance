@@ -4,10 +4,10 @@ type AsyncFunction = (
   req: Request,
   res: Response,
   next: NextFunction
-) => Promise<any>;
+) => Promise<unknown> | unknown;
 
 export const asyncHandler = (fn: AsyncFunction): RequestHandler => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };

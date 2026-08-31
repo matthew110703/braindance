@@ -4,17 +4,61 @@ import { ApiError } from "../utils/apiError.js";
 import { env } from "../config/env.config.js";
 import { logger } from "../config/logger.config.js";
 
+interface MongoDuplicateKeyError {
+  code: 11000;
+  keyValue: Record<string, unknown>;
+}
+
+interface MongooseValidationError {
+  name: "ValidationError";
+  errors: Record<string, { message: string }>;
+}
+
+interface MongooseCastError {
+  name: "CastError";
+  value: unknown;
+}
+
+const isMongoDuplicateKeyError = (err: unknown): err is MongoDuplicateKeyError => {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code: unknown }).code === 11000 &&
+    "keyValue" in err
+  );
+};
+
+const isMongooseValidationError = (err: unknown): err is MongooseValidationError => {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "name" in err &&
+    (err as { name: unknown }).name === "ValidationError" &&
+    "errors" in err
+  );
+};
+
+const isMongooseCastError = (err: unknown): err is MongooseCastError => {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "name" in err &&
+    (err as { name: unknown }).name === "CastError"
+  );
+};
+
 export const errorHandlerMiddleware: ErrorRequestHandler = (
-  err: any,
+  err: unknown,
   req: Request,
   res: Response,
   _next: NextFunction
 ): void => {
-  let error = err;
+  let error: ApiError;
 
   // Handle Zod validation errors
-  if (error instanceof ZodError) {
-    const flattened = error.flatten();
+  if (err instanceof ZodError) {
+    const flattened = err.flatten();
     res.status(400).json({
       success: false,
       statusCode: 400,
@@ -24,30 +68,29 @@ export const errorHandlerMiddleware: ErrorRequestHandler = (
     return;
   }
 
-  // Handle Mongoose duplicate key error
-  if (error?.code === 11000) {
-    const keys = Object.keys(error.keyValue || {});
+  // Handle custom ApiError instances directly
+  if (err instanceof ApiError) {
+    error = err;
+  } else if (isMongoDuplicateKeyError(err)) {
+    const keys = Object.keys(err.keyValue);
     const message = `Duplicate value entered for ${keys.join(", ")} field(s)`;
     error = new ApiError(409, message);
-  }
-
-  // Handle Mongoose CastError (e.g. invalid ObjectId)
-  if (error?.name === "CastError") {
-    const message = `Invalid resource identifier: ${error.value}`;
+  } else if (isMongooseCastError(err)) {
+    const message = `Invalid resource identifier: ${String(err.value)}`;
     error = new ApiError(400, message);
-  }
-
-  // Handle Mongoose ValidationError
-  if (error?.name === "ValidationError" && error.errors) {
-    const messages = Object.values(error.errors).map((el: any) => el.message);
+  } else if (isMongooseValidationError(err)) {
+    const messages = Object.values(err.errors).map((el) => el.message);
     error = new ApiError(400, "Validation Error", messages);
-  }
-
-  // Handle default or unknown errors
-  if (!(error instanceof ApiError)) {
-    const statusCode = error.statusCode || error.status || 500;
-    const message = error.message || "Internal Server Error";
-    error = new ApiError(statusCode, message, error?.errors || [], error.stack);
+  } else if (err instanceof Error) {
+    const customStatus =
+      "statusCode" in err && typeof err.statusCode === "number"
+        ? err.statusCode
+        : "status" in err && typeof err.status === "number"
+        ? err.status
+        : 500;
+    error = new ApiError(customStatus, err.message, [], err.stack);
+  } else {
+    error = new ApiError(500, typeof err === "string" ? err : "An unexpected error occurred");
   }
 
   // Log server errors (500s)

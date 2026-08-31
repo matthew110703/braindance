@@ -42,7 +42,7 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 // Global unhandled promise rejection and exception catchers
-process.on("unhandledRejection", (reason: any) => {
+process.on("unhandledRejection", (reason: unknown) => {
   logger.fatal({ reason }, "💥 Unhandled Rejection detected");
   process.exit(1);
 });

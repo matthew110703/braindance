@@ -1,4 +1,4 @@
-import { UserModel, IUser, IUserDocument } from "./user.model.js";
+import { UserModel, IUserDocument } from "./user.model.js";
 import { CreateUserInput, UpdateUserInput, GetUsersQueryInput } from "./user.schema.js";
 
 export class UserRepository {
@@ -16,7 +16,7 @@ export class UserRepository {
 
   async findAll(query: GetUsersQueryInput): Promise<{ users: IUserDocument[]; total: number }> {
     const { page = 1, limit = 10, search } = query;
-    const filter: Record<string, any> = {};
+    const filter: Record<string, unknown> = {};
 
     if (search) {
       filter.$or = [

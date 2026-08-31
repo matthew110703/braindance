@@ -41,8 +41,8 @@ const userSchema = new Schema<IUserDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret) {
-        delete (ret as any).__v;
+      transform(_doc, ret: Record<string, unknown>) {
+        delete ret.__v;
         return ret;
       },
     },
