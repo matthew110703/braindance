@@ -19,11 +19,6 @@ const envSchema = z.object({
       required_error: "DATABASE_URL is required",
     })
     .min(1, "DATABASE_URL cannot be empty"),
-  JWT_SECRET: z
-    .string({
-      required_error: "JWT_SECRET is required",
-    })
-    .min(16, "JWT_SECRET must be at least 16 characters long"),
   CORS_ORIGIN: z.string().default("*"),
   ENABLE_SWAGGER: z
     .preprocess((val) => {
