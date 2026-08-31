@@ -1,0 +1,40 @@
+{
+  "name": "braindance",
+  "version": "1.0.0",
+  "description": "Braindance backend API",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev:server": "tsx watch src/server.ts",
+    "dev:types": "tsc --noEmit --watch --preserveWatchOutput",
+    "dev": "concurrently -n \"SERVER,TYPES\" -c \"green,blue\" \"npm run dev:server\" \"npm run dev:types\"",
+    "typecheck": "tsc --noEmit",
+    "build:clean": "rimraf dist",
+    "build:js": "swc src -d dist --strip-leading-paths",
+    "build": "npm run build:clean && npm run typecheck && npm run build:js",
+    "start": "node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "mongoose": "^9.2.4"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.7.1",
+    "@swc/core": "^1.16.1",
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.3.0",
+    "concurrently": "^9.2.1",
+    "rimraf": "^6.1.2",
+    "tsx": "^4.21.0",
+    "typescript": "^7.0.2"
+  }
+}
