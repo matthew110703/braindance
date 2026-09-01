@@ -2,7 +2,11 @@ import { Request, Response } from "express";
 import { movieService, MovieService } from "./movie.service.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
-import { MovieListQuery } from "./movie.schema.js";
+import {
+  MovieListQuery,
+  MovieDetailsQuery,
+  MovieRecommendationsQuery,
+} from "./movie.schema.js";
 
 export class MovieController {
   constructor(private readonly service: MovieService = movieService) {}
@@ -41,6 +45,26 @@ export class MovieController {
     res
       .status(200)
       .json(new ApiResponse(200, result, "Upcoming movies retrieved successfully"));
+  });
+
+  getMovieDetails = asyncHandler(async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const query = req.query as unknown as MovieDetailsQuery;
+    const result = await this.service.getMovieDetails(id, query);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, "Movie details retrieved successfully"));
+  });
+
+  getMovieRecommendations = asyncHandler(async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const query = req.query as unknown as MovieRecommendationsQuery;
+    const result = await this.service.getMovieRecommendations(id, query);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, "Movie recommendations retrieved successfully"));
   });
 }
 

@@ -1,6 +1,15 @@
 import { tmdbAdapter, TMDBAdapter } from "../../adapters/tmdb.adapter.js";
-import { TvListQuery } from "./tv.schema.js";
-import { TMDBTvListResponse } from "./tv.types.js";
+import {
+  TvListQuery,
+  TvDetailsQuery,
+  TvRecommendationsQuery,
+} from "./tv.schema.js";
+import {
+  TMDBTvListResponse,
+  TMDBTvDetails,
+  TMDBTvDetailsSanitized,
+} from "./tv.types.js";
+import { TMDBTvItem, TMDBPaginatedResponse } from "../discover/discover.types.js";
 
 export class TvService {
   constructor(private readonly adapter: TMDBAdapter = tmdbAdapter) {}
@@ -42,6 +51,46 @@ export class TvService {
     return this.adapter.get<TMDBTvListResponse>(
       "/tv/top_rated",
       params as Record<string, unknown>
+    );
+  }
+
+  /**
+   * Get top level details of a TV show by ID (with credits included and production metadata omitted)
+   */
+  async getTvDetails(
+    id: number,
+    query: TvDetailsQuery
+  ): Promise<TMDBTvDetailsSanitized> {
+    const appendList = query.append_to_response
+      ? Array.from(
+          new Set([...query.append_to_response.split(",").map((s) => s.trim()), "credits"])
+        ).join(",")
+      : "credits";
+
+    const data = await this.adapter.get<TMDBTvDetails>(
+      `/tv/${id}`,
+      { ...query, append_to_response: appendList } as Record<string, unknown>
+    );
+
+    const {
+      production_companies: _companies,
+      production_countries: _countries,
+      ...sanitizedDetails
+    } = data as Record<string, unknown>;
+
+    return sanitizedDetails as unknown as TMDBTvDetailsSanitized;
+  }
+
+  /**
+   * Get recommended TV shows based on a TV show ID
+   */
+  async getTvRecommendations(
+    id: number,
+    query: TvRecommendationsQuery
+  ): Promise<TMDBPaginatedResponse<TMDBTvItem>> {
+    return this.adapter.get<TMDBPaginatedResponse<TMDBTvItem>>(
+      `/tv/${id}/recommendations`,
+      query as Record<string, unknown>
     );
   }
 }

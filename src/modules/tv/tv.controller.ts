@@ -2,7 +2,11 @@ import { Request, Response } from "express";
 import { tvService, TvService } from "./tv.service.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
-import { TvListQuery } from "./tv.schema.js";
+import {
+  TvListQuery,
+  TvDetailsQuery,
+  TvRecommendationsQuery,
+} from "./tv.schema.js";
 
 export class TvController {
   constructor(private readonly service: TvService = tvService) {}
@@ -41,6 +45,26 @@ export class TvController {
     res
       .status(200)
       .json(new ApiResponse(200, result, "Top rated TV shows retrieved successfully"));
+  });
+
+  getTvDetails = asyncHandler(async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const query = req.query as unknown as TvDetailsQuery;
+    const result = await this.service.getTvDetails(id, query);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, "TV show details retrieved successfully"));
+  });
+
+  getTvRecommendations = asyncHandler(async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const query = req.query as unknown as TvRecommendationsQuery;
+    const result = await this.service.getTvRecommendations(id, query);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, "TV show recommendations retrieved successfully"));
   });
 }
 
