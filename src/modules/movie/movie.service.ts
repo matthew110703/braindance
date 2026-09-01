@@ -11,6 +11,8 @@ import {
 } from "./movie.types.js";
 import { TMDBMovieItem, TMDBPaginatedResponse } from "../discover/discover.types.js";
 
+import { sanitizeResponse } from "../../utils/sanitize.util.js";
+
 export class MovieService {
   constructor(private readonly adapter: TMDBAdapter = tmdbAdapter) {}
 
@@ -72,13 +74,7 @@ export class MovieService {
       { ...query, append_to_response: appendList } as Record<string, unknown>
     );
 
-    const {
-      production_companies: _companies,
-      production_countries: _countries,
-      ...sanitizedDetails
-    } = data as Record<string, unknown>;
-
-    return sanitizedDetails as unknown as TMDBMovieDetailsSanitized;
+    return sanitizeResponse(data) as unknown as TMDBMovieDetailsSanitized;
   }
 
   /**

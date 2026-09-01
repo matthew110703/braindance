@@ -1,14 +1,6 @@
 import mongoose from "mongoose";
-import dns from "node:dns";
 import { env } from "./env.config.js";
 import { logger } from "./logger.config.js";
-
-// Ensure Node.js resolves SRV records properly for MongoDB Atlas
-try {
-  dns.setServers(["8.8.8.8", "1.1.1.1"]);
-} catch (e) {
-  // Ignore if not permitted
-}
 
 export const connectDB = async (): Promise<typeof mongoose> => {
   try {

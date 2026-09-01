@@ -13,6 +13,8 @@ import {
 } from "./tv.types.js";
 import { TMDBTvItem, TMDBPaginatedResponse } from "../discover/discover.types.js";
 
+import { sanitizeResponse } from "../../utils/sanitize.util.js";
+
 export class TvService {
   constructor(private readonly adapter: TMDBAdapter = tmdbAdapter) {}
 
@@ -74,13 +76,7 @@ export class TvService {
       { ...query, append_to_response: appendList } as Record<string, unknown>
     );
 
-    const {
-      production_companies: _companies,
-      production_countries: _countries,
-      ...sanitizedDetails
-    } = data as Record<string, unknown>;
-
-    return sanitizedDetails as unknown as TMDBTvDetailsSanitized;
+    return sanitizeResponse(data) as unknown as TMDBTvDetailsSanitized;
   }
 
   /**

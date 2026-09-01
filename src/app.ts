@@ -7,6 +7,7 @@ import { httpLogger } from "./config/logger.config.js";
 import { rateLimiter } from "./middleware/rateLimiter.middleware.js";
 import { notFoundMiddleware } from "./middleware/notFound.middleware.js";
 import { errorHandlerMiddleware } from "./middleware/error.middleware.js";
+import { deviceMiddleware } from "./middleware/device.middleware.js";
 import globalRouter from "./routes/index.js";
 
 const app: Express = express();
@@ -24,6 +25,9 @@ app.use(
 app.use(httpLogger);
 app.use(compression());
 app.use(rateLimiter);
+
+// Device identity extraction
+app.use(deviceMiddleware);
 
 // Body parsing middlewares
 app.use(express.json({ limit: "16kb" }));

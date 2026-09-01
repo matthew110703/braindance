@@ -5,6 +5,8 @@ import movieRoutes from "../modules/movie/movie.routes.js";
 import tvRoutes from "../modules/tv/tv.routes.js";
 import trendingRoutes from "../modules/trending/trending.routes.js";
 import searchRoutes from "../modules/search/search.routes.js";
+import watchlistRoutes from "../modules/watchlist/watchlist.routes.js";
+import listRoutes from "../modules/list/list.routes.js";
 
 const v1Router = Router();
 
@@ -17,6 +19,14 @@ const routes: RouteDefinition[] = [
   {
     path: "/health",
     route: healthRoutes,
+  },
+  {
+    path: "/watchlist",
+    route: watchlistRoutes,
+  },
+  {
+    path: "/lists",
+    route: listRoutes,
   },
   {
     path: "/discover",
@@ -45,3 +55,4 @@ routes.forEach(({ path, route }) => {
 });
 
 export default v1Router;
+
