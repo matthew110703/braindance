@@ -7,6 +7,7 @@ import trendingRoutes from "../modules/trending/trending.routes.js";
 import searchRoutes from "../modules/search/search.routes.js";
 import watchlistRoutes from "../modules/watchlist/watchlist.routes.js";
 import listRoutes from "../modules/list/list.routes.js";
+import genreRoutes from "../modules/genre/genre.routes.js";
 
 const v1Router = Router();
 
@@ -19,6 +20,10 @@ const routes: RouteDefinition[] = [
   {
     path: "/health",
     route: healthRoutes,
+  },
+  {
+    path: "/genres",
+    route: genreRoutes,
   },
   {
     path: "/watchlist",

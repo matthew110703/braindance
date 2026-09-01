@@ -31,6 +31,7 @@ const envSchema = z.object({
     .default("info"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000), // 15 mins
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
+  CACHE_TTL_HOURS: z.coerce.number().positive().default(168), // 7 days default
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
