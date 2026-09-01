@@ -1,0 +1,47 @@
+import { Request, Response } from "express";
+import { tvService, TvService } from "./tv.service.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { ApiResponse } from "../../utils/apiResponse.js";
+import { TvListQuery } from "./tv.schema.js";
+
+export class TvController {
+  constructor(private readonly service: TvService = tvService) {}
+
+  getAiringToday = asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query as unknown as TvListQuery;
+    const result = await this.service.getAiringToday(query);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, "Airing today TV shows retrieved successfully"));
+  });
+
+  getOnTheAir = asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query as unknown as TvListQuery;
+    const result = await this.service.getOnTheAir(query);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, "On the air TV shows retrieved successfully"));
+  });
+
+  getPopular = asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query as unknown as TvListQuery;
+    const result = await this.service.getPopular(query);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, "Popular TV shows retrieved successfully"));
+  });
+
+  getTopRated = asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query as unknown as TvListQuery;
+    const result = await this.service.getTopRated(query);
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, result, "Top rated TV shows retrieved successfully"));
+  });
+}
+
+export const tvController = new TvController();
