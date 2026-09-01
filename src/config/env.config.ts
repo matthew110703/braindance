@@ -13,13 +13,19 @@ const envSchema = z.object({
     .int()
     .min(1)
     .max(65535)
-    .default(1),
+    .default(8001),
   DATABASE_URL: z
     .string({
       required_error: "DATABASE_URL is required",
     })
     .min(1, "DATABASE_URL cannot be empty"),
   CORS_ORIGIN: z.string().default("*"),
+  TMDB_ACCESS_TOKEN: z
+    .string({
+      required_error: "TMDB_ACCESS_TOKEN is required",
+    })
+    .min(1, "TMDB_ACCESS_TOKEN cannot be empty"),
+  TMDB_BASE_URL: z.string().url().default("https://api.themoviedb.org/3"),
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace"])
     .default("info"),
