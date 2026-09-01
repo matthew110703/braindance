@@ -8,6 +8,8 @@ import {
   TMDBTvListResponse,
   TMDBTvDetails,
   TMDBTvDetailsSanitized,
+  TMDBTvSeasonDetails,
+  TMDBTvEpisodeDetails,
 } from "./tv.types.js";
 import { TMDBTvItem, TMDBPaginatedResponse } from "../discover/discover.types.js";
 
@@ -93,6 +95,36 @@ export class TvService {
       query as Record<string, unknown>
     );
   }
+
+  /**
+   * Get details of a TV season by series ID and season number
+   */
+  async getTvSeasonDetails(
+    seriesId: number,
+    seasonNumber: number,
+    query: TvDetailsQuery
+  ): Promise<TMDBTvSeasonDetails> {
+    return this.adapter.get<TMDBTvSeasonDetails>(
+      `/tv/${seriesId}/season/${seasonNumber}`,
+      query as Record<string, unknown>
+    );
+  }
+
+  /**
+   * Get details of a TV episode by series ID, season number, and episode number
+   */
+  async getTvEpisodeDetails(
+    seriesId: number,
+    seasonNumber: number,
+    episodeNumber: number,
+    query: TvDetailsQuery
+  ): Promise<TMDBTvEpisodeDetails> {
+    return this.adapter.get<TMDBTvEpisodeDetails>(
+      `/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}`,
+      query as Record<string, unknown>
+    );
+  }
 }
 
 export const tvService = new TvService();
+

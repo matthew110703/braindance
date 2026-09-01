@@ -100,3 +100,55 @@ export type TMDBTvDetailsSanitized = Omit<
   TMDBTvDetails,
   "production_companies" | "production_countries"
 >;
+
+export interface TMDBTvSeasonEpisode {
+  air_date: string | null;
+  episode_number: number;
+  episode_type?: string;
+  id: number;
+  name: string;
+  overview: string;
+  production_code: string;
+  runtime: number | null;
+  season_number: number;
+  show_id: number;
+  still_path: string | null;
+  vote_average: number;
+  vote_count: number;
+  crew: CrewMember[];
+  guest_stars: CastMember[];
+  [key: string]: unknown;
+}
+
+export interface TMDBTvSeasonDetails {
+  _id: string;
+  air_date: string | null;
+  episodes: TMDBTvSeasonEpisode[];
+  name: string;
+  overview: string;
+  id: number;
+  poster_path: string | null;
+  season_number: number;
+  vote_average: number;
+  networks?: TvNetwork[];
+  [key: string]: unknown;
+}
+
+export interface TMDBTvEpisodeDetails {
+  air_date: string | null;
+  crew: CrewMember[];
+  episode_number: number;
+  episode_type?: string;
+  guest_stars: CastMember[];
+  name: string;
+  overview: string;
+  id: number;
+  production_code: string;
+  runtime: number | null;
+  season_number: number;
+  still_path: string | null;
+  vote_average: number;
+  vote_count: number;
+  [key: string]: unknown;
+}
+

@@ -66,6 +66,47 @@ export class TvController {
       .status(200)
       .json(new ApiResponse(200, result, "TV show recommendations retrieved successfully"));
   });
+
+  getTvSeasonDetails = asyncHandler(async (req: Request, res: Response) => {
+    const seriesId = Number(req.params.id);
+    const seasonNumber = Number(req.params.season_number);
+    const query = req.query as unknown as TvDetailsQuery;
+    const result = await this.service.getTvSeasonDetails(seriesId, seasonNumber, query);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          result,
+          `TV season ${seasonNumber} details retrieved successfully`
+        )
+      );
+  });
+
+  getTvEpisodeDetails = asyncHandler(async (req: Request, res: Response) => {
+    const seriesId = Number(req.params.id);
+    const seasonNumber = Number(req.params.season_number);
+    const episodeNumber = Number(req.params.episode_number);
+    const query = req.query as unknown as TvDetailsQuery;
+    const result = await this.service.getTvEpisodeDetails(
+      seriesId,
+      seasonNumber,
+      episodeNumber,
+      query
+    );
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          result,
+          `TV episode S${seasonNumber}E${episodeNumber} details retrieved successfully`
+        )
+      );
+  });
 }
 
 export const tvController = new TvController();
+

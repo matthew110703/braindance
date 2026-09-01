@@ -5,6 +5,8 @@ import {
   tvListQuerySchema,
   tvDetailsSchema,
   tvRecommendationsSchema,
+  tvSeasonDetailsSchema,
+  tvEpisodeDetailsSchema,
 } from "./tv.schema.js";
 
 const router = Router();
@@ -47,4 +49,31 @@ router.get(
   tvController.getTvRecommendations
 );
 
+// Season Details routes (both plural and singular aliases)
+router.get(
+  "/:id/seasons/:season_number",
+  validate(tvSeasonDetailsSchema),
+  tvController.getTvSeasonDetails
+);
+
+router.get(
+  "/:id/season/:season_number",
+  validate(tvSeasonDetailsSchema),
+  tvController.getTvSeasonDetails
+);
+
+// Episode Details routes (both plural and singular aliases)
+router.get(
+  "/:id/seasons/:season_number/episodes/:episode_number",
+  validate(tvEpisodeDetailsSchema),
+  tvController.getTvEpisodeDetails
+);
+
+router.get(
+  "/:id/season/:season_number/episode/:episode_number",
+  validate(tvEpisodeDetailsSchema),
+  tvController.getTvEpisodeDetails
+);
+
 export default router;
+
