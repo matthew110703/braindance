@@ -1,6 +1,5 @@
 import { Router } from "express";
 import healthRoutes from "../modules/health/health.routes.js";
-import userRoutes from "../modules/user/user.routes.js";
 
 const v1Router = Router();
 
@@ -13,10 +12,6 @@ const routes: RouteDefinition[] = [
   {
     path: "/health",
     route: healthRoutes,
-  },
-  {
-    path: "/users",
-    route: userRoutes,
   },
 ];
 
