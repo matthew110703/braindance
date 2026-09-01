@@ -3,6 +3,7 @@ import healthRoutes from "../modules/health/health.routes.js";
 import discoverRoutes from "../modules/discover/discover.routes.js";
 import movieRoutes from "../modules/movie/movie.routes.js";
 import tvRoutes from "../modules/tv/tv.routes.js";
+import trendingRoutes from "../modules/trending/trending.routes.js";
 
 const v1Router = Router();
 
@@ -27,6 +28,10 @@ const routes: RouteDefinition[] = [
   {
     path: "/tv",
     route: tvRoutes,
+  },
+  {
+    path: "/trending",
+    route: trendingRoutes,
   },
 ];
 
