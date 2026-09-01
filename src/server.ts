@@ -8,16 +8,14 @@ let server: Server;
 
 const startServer = async (): Promise<void> => {
   try {
+    // Initialize Database connection first
+    await connectDB();
+
     // Start HTTP server
     server = app.listen(env.PORT, () => {
       logger.info(
         `🚀 Braindance Server started in [${env.NODE_ENV}] mode at http://localhost:${env.PORT}`
       );
-    });
-
-    // Initialize Database connection in background
-    connectDB().catch((error) => {
-      logger.error({ error }, "⚠️ Initial MongoDB connection error");
     });
   } catch (error) {
     logger.fatal({ error }, "❌ Failed to start application server");
