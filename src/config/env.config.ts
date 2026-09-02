@@ -32,6 +32,11 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000), // 15 mins
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   CACHE_TTL_HOURS: z.coerce.number().positive().default(168), // 7 days default
+  API_KEY: z
+    .string({
+      required_error: "API_KEY is required",
+    })
+    .min(8, "API_KEY must be at least 8 characters"),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
