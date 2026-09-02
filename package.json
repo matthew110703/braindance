@@ -4,6 +4,7 @@
   "description": "Braindance backend API",
   "type": "module",
   "main": "dist/server.js",
+  "packageManager": "pnpm@10.5.2",
   "scripts": {
     "dev:server": "tsx watch src/server.ts",
     "dev:types": "tsc --noEmit --watch --preserveWatchOutput",
