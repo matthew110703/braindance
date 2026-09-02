@@ -1,0 +1,81 @@
+name: CI/CD Pipeline & Render Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =========================================================================
+  # 1. CI CHECKS: Install dependencies, TypeScript verification & SWC build
+  # =========================================================================
+  verify:
+    name: Run Quality & Build Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js (v22 LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type Check (tsc)
+        run: pnpm run typecheck
+
+      - name: Production Build (swc)
+        run: pnpm run build
+
+  # =========================================================================
+  # 2. DEPLOYMENT: Trigger Render Web Service deployment on push to main
+  # =========================================================================
+  deploy:
+    name: Deploy to Render
+    needs: verify
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deploy Hook
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK_URL secret is not set in GitHub repository secrets!"
+            echo "Please add your Render Deploy Hook URL to GitHub repository settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+          echo "🚀 Dispatching deployment to Render..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$RENDER_DEPLOY_HOOK")
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
+          BODY=$(echo "$RESPONSE" | grep -v "HTTP_STATUS:")
+
+          echo "Response Body: $BODY"
+          echo "HTTP Status Code: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Render deployment triggered successfully!"
+          else
+            echo "::error::Render deployment trigger failed with HTTP status: $HTTP_STATUS"
+            exit 1
+          fi
