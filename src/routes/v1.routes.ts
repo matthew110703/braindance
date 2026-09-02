@@ -9,6 +9,7 @@ import watchlistRoutes from "../modules/watchlist/watchlist.routes.js";
 import listRoutes from "../modules/list/list.routes.js";
 import genreRoutes from "../modules/genre/genre.routes.js";
 import historyRoutes from "../modules/history/history.routes.js";
+import collectionRoutes from "../modules/collection/collection.routes.js";
 
 const v1Router = Router();
 
@@ -25,6 +26,10 @@ const routes: RouteDefinition[] = [
   {
     path: "/genres",
     route: genreRoutes,
+  },
+  {
+    path: "/collections",
+    route: collectionRoutes,
   },
   {
     path: "/watchlist",
