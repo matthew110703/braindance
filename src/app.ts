@@ -2,6 +2,7 @@ import express, { Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
+import { createRequire } from "node:module";
 import { env } from "./config/env.config.js";
 import { httpLogger } from "./config/logger.config.js";
 import { rateLimiter } from "./middleware/rateLimiter.middleware.js";
@@ -10,6 +11,9 @@ import { errorHandlerMiddleware } from "./middleware/error.middleware.js";
 import { deviceMiddleware } from "./middleware/device.middleware.js";
 import { protect } from "./middleware/protect.middleware.js";
 import globalRouter from "./routes/index.js";
+
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json") as { version?: string };
 
 const app: Express = express();
 
@@ -38,7 +42,7 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.get("/", (_req, res) => {
   res.json({
     name: "Braindance API",
-    version: "1.0.0",
+    version: pkg.version || "1.0.0",
     environment: env.NODE_ENV,
     status: "active",
   });
