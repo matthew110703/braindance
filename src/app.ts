@@ -23,6 +23,7 @@ app.disable("x-powered-by");
 app.set("trust proxy", 1);
 
 // Parse CORS origin configuration (credentials: true cannot use literal "*")
+// Always strip trailing slashes because browser Origin headers never include a trailing slash.
 const parseCorsOrigin = (rawOrigin: string): boolean | string[] => {
   const trimmed = rawOrigin.trim();
   if (!trimmed || trimmed === "*") {
@@ -30,9 +31,17 @@ const parseCorsOrigin = (rawOrigin: string): boolean | string[] => {
   }
   return trimmed
     .split(",")
-    .map((o) => o.trim())
+    .map((o) => o.trim().replace(/\/+$/, ""))
     .filter(Boolean);
 };
+
+// Normalize accidental double leading slashes (e.g. "//api/v1/watchlist" when BRAINDANCE_API_URL has a trailing slash)
+app.use((req, _res, next) => {
+  if (req.url.startsWith("//")) {
+    req.url = req.url.replace(/^\/+/, "/");
+  }
+  next();
+});
 
 // Security middlewares
 app.use(helmet());
