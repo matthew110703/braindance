@@ -11,10 +11,22 @@ import {
 } from "./genre.types.js";
 import { GenreQuery } from "./genre.schema.js";
 
+const MAX_GENRE_CACHE_SIZE = 50;
+
 export class GenreService {
   private memoryCache: Map<string, { genres: TMDBGenreItem[]; lastFetchedAt: Date }> = new Map();
 
   constructor(private readonly adapter: TMDBAdapter = tmdbAdapter) {}
+
+  private setMemoryCache(key: string, genres: TMDBGenreItem[], lastFetchedAt: Date): void {
+    if (!this.memoryCache.has(key) && this.memoryCache.size >= MAX_GENRE_CACHE_SIZE) {
+      const oldestKey = this.memoryCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.memoryCache.delete(oldestKey);
+      }
+    }
+    this.memoryCache.set(key, { genres, lastFetchedAt });
+  }
 
   /**
    * Internal helper to fetch from TMDB, update MongoDB cache, and update in-memory cache
@@ -33,8 +45,8 @@ export class GenreService {
     const genres = sanitized.genres || [];
     const now = new Date();
 
-    // Update in-memory fallback cache
-    this.memoryCache.set(`${type}_${language}`, { genres, lastFetchedAt: now });
+    // Update bounded in-memory fallback cache
+    this.setMemoryCache(`${type}_${language}`, genres, now);
 
     // Update MongoDB cache
     if (mongoose.connection.readyState === 1) {

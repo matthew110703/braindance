@@ -46,6 +46,7 @@ router.delete(
 
 router.post(
   "/remove",
+  validate(addWatchlistSchema),
   watchlistController.removeFromWatchlist
 );
 

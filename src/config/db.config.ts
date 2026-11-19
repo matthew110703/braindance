@@ -2,9 +2,25 @@ import mongoose from "mongoose";
 import { env } from "./env.config.js";
 import { logger } from "./logger.config.js";
 
+let listenersRegistered = false;
+
 export const connectDB = async (): Promise<typeof mongoose> => {
   try {
-    const conn = await mongoose.connect(env.DATABASE_URL);
+    if (!listenersRegistered) {
+      listenersRegistered = true;
+      mongoose.connection.on("error", (error) => {
+        logger.error({ error }, "❌ MongoDB runtime connection error");
+      });
+      mongoose.connection.on("disconnected", () => {
+        logger.warn("⚠️ MongoDB disconnected");
+      });
+    }
+
+    const conn = await mongoose.connect(env.DATABASE_URL, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 30000,
+      maxPoolSize: 20,
+    });
     logger.info(
       {
         host: conn.connection.host,

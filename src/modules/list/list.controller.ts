@@ -17,10 +17,10 @@ export class ListController {
     const result = await this.service.createList(body, query.session_id);
 
     res
-      .status(200)
+      .status(201)
       .json(
         new ApiResponse(
-          200,
+          201,
           result,
           "List created successfully"
         )

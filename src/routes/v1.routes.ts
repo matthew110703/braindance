@@ -1,5 +1,4 @@
 import { Router } from "express";
-import healthRoutes from "../modules/health/health.routes.js";
 import discoverRoutes from "../modules/discover/discover.routes.js";
 import movieRoutes from "../modules/movie/movie.routes.js";
 import tvRoutes from "../modules/tv/tv.routes.js";
@@ -10,6 +9,7 @@ import listRoutes from "../modules/list/list.routes.js";
 import genreRoutes from "../modules/genre/genre.routes.js";
 import historyRoutes from "../modules/history/history.routes.js";
 import collectionRoutes from "../modules/collection/collection.routes.js";
+import streamingRoutes from "../modules/streaming/streaming.routes.js";
 
 const v1Router = Router();
 
@@ -20,8 +20,8 @@ interface RouteDefinition {
 
 const routes: RouteDefinition[] = [
   {
-    path: "/health",
-    route: healthRoutes,
+    path: "/streaming",
+    route: streamingRoutes,
   },
   {
     path: "/genres",

@@ -73,7 +73,7 @@ export const tvEpisodeDetailsSchema = z.object({
     episode_number: z.coerce
       .number({ invalid_type_error: "Episode number must be a number" })
       .int("Episode number must be an integer")
-      .min(0, "Episode number cannot be negative"),
+      .min(1, "Episode number must be at least 1"),
   }),
   query: z.object({
     language: z.string().default("en-US"),

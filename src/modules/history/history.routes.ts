@@ -5,10 +5,18 @@ import {
   updateHistorySchema,
   getHistoryItemSchema,
   getHistoryListSchema,
+  getContinueWatchingSchema,
   removeHistoryItemSchema,
 } from "./history.schema.js";
 
 const router = Router();
+
+// Get continue-watching entries (unfinished playback)
+router.get(
+  "/continue-watching",
+  validate(getContinueWatchingSchema),
+  historyController.getContinueWatching
+);
 
 // Update playback progress & media metadata
 router.put(

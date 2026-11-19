@@ -16,14 +16,11 @@ export const protect = (req: Request, _res: Response, next: NextFunction): void 
 
   const expectedKey = env.API_KEY;
 
-  // Constant-time comparison to prevent timing attacks
-  const clientKeyBuffer = Buffer.from(clientApiKey);
-  const expectedKeyBuffer = Buffer.from(expectedKey);
+  // Hash both keys to fixed-length SHA-256 digests so timingSafeEqual does not leak key length
+  const clientHash = crypto.createHash("sha256").update(clientApiKey).digest();
+  const expectedHash = crypto.createHash("sha256").update(expectedKey).digest();
 
-  if (
-    clientKeyBuffer.length !== expectedKeyBuffer.length ||
-    !crypto.timingSafeEqual(clientKeyBuffer, expectedKeyBuffer)
-  ) {
+  if (!crypto.timingSafeEqual(clientHash, expectedHash)) {
     return next(new ApiError(401, "Unauthorized"));
   }
 

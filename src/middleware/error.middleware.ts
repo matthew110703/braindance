@@ -56,14 +56,21 @@ export const errorHandlerMiddleware: ErrorRequestHandler = (
 ): void => {
   let error: ApiError;
 
-  // Handle Zod validation errors
+  // Handle Zod validation errors with field-level path keys
   if (err instanceof ZodError) {
-    const flattened = err.flatten();
+    const fieldErrors: Record<string, string[]> = {};
+    for (const issue of err.issues) {
+      const key = issue.path.length > 0 ? issue.path.join(".") : "request";
+      if (!fieldErrors[key]) {
+        fieldErrors[key] = [];
+      }
+      fieldErrors[key].push(issue.message);
+    }
     res.status(400).json({
       success: false,
       statusCode: 400,
       message: "Validation error",
-      errors: flattened.fieldErrors,
+      errors: fieldErrors,
     });
     return;
   }
@@ -105,10 +112,15 @@ export const errorHandlerMiddleware: ErrorRequestHandler = (
     );
   }
 
+  const publicMessage =
+    error.statusCode >= 500 && env.NODE_ENV === "production"
+      ? "Internal server error"
+      : error.message;
+
   res.status(error.statusCode).json({
     success: false,
     statusCode: error.statusCode,
-    message: error.message,
+    message: publicMessage,
     errors: error.errors,
     ...(env.NODE_ENV === "development" ? { stack: error.stack } : {}),
   });

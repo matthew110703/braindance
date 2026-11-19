@@ -12,6 +12,7 @@ import {
   TMDBTvEpisodeDetails,
 } from "./tv.types.js";
 import { TMDBTvItem, TMDBPaginatedResponse } from "../discover/discover.types.js";
+import { streamingService } from "../streaming/streaming.service.js";
 
 import { sanitizeResponse } from "../../utils/sanitize.util.js";
 
@@ -67,16 +68,34 @@ export class TvService {
   ): Promise<TMDBTvDetailsSanitized> {
     const appendList = query.append_to_response
       ? Array.from(
-          new Set([...query.append_to_response.split(",").map((s) => s.trim()), "credits"])
+          new Set([
+            ...query.append_to_response
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+            "credits",
+            "external_ids",
+          ])
         ).join(",")
-      : "credits";
+      : "credits,external_ids";
 
-    const data = await this.adapter.get<TMDBTvDetails>(
-      `/tv/${id}`,
-      { ...query, append_to_response: appendList } as Record<string, unknown>
-    );
+    const [data, servers] = await Promise.all([
+      this.adapter.get<TMDBTvDetails>(`/tv/${id}`, {
+        ...query,
+        append_to_response: appendList,
+      } as Record<string, unknown>),
+      streamingService.getAvailableServersForMedia({
+        type: "tv",
+        tmdbId: id,
+        season: 1,
+        episode: 1,
+      }),
+    ]);
 
-    return sanitizeResponse(data) as unknown as TMDBTvDetailsSanitized;
+    const sanitized = sanitizeResponse(data) as unknown as TMDBTvDetailsSanitized;
+    sanitized.servers = servers;
+
+    return sanitized;
   }
 
   /**
@@ -100,10 +119,11 @@ export class TvService {
     seasonNumber: number,
     query: TvDetailsQuery
   ): Promise<TMDBTvSeasonDetails> {
-    return this.adapter.get<TMDBTvSeasonDetails>(
+    const data = await this.adapter.get<TMDBTvSeasonDetails>(
       `/tv/${seriesId}/season/${seasonNumber}`,
       query as Record<string, unknown>
     );
+    return sanitizeResponse(data);
   }
 
   /**
@@ -115,10 +135,23 @@ export class TvService {
     episodeNumber: number,
     query: TvDetailsQuery
   ): Promise<TMDBTvEpisodeDetails> {
-    return this.adapter.get<TMDBTvEpisodeDetails>(
-      `/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}`,
-      query as Record<string, unknown>
-    );
+    const [data, servers] = await Promise.all([
+      this.adapter.get<TMDBTvEpisodeDetails>(
+        `/tv/${seriesId}/season/${seasonNumber}/episode/${episodeNumber}`,
+        query as Record<string, unknown>
+      ),
+      streamingService.getAvailableServersForMedia({
+        type: "tv",
+        tmdbId: seriesId,
+        season: seasonNumber,
+        episode: episodeNumber,
+      }),
+    ]);
+
+    const sanitized = sanitizeResponse(data);
+    sanitized.servers = servers;
+
+    return sanitized;
   }
 }
 

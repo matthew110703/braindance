@@ -1,11 +1,14 @@
 import { z } from "zod";
 
+export const watchlistMediaTypeSchema = z.enum(["movie", "tv"]);
+
 export const addWatchlistSchema = z.object({
   body: z.object({
     media_id: z.coerce
       .number({ required_error: "media_id is required" })
       .int()
       .positive("media_id must be a positive integer"),
+    media_type: watchlistMediaTypeSchema.default("movie"),
   }),
 });
 
@@ -16,6 +19,9 @@ export const removeWatchlistSchema = z.object({
       .int()
       .positive("media_id must be a positive integer"),
   }),
+  query: z.object({
+    media_type: watchlistMediaTypeSchema.optional(),
+  }),
 });
 
 export const checkWatchlistSchema = z.object({
@@ -25,14 +31,19 @@ export const checkWatchlistSchema = z.object({
       .int()
       .positive("media_id must be a positive integer"),
   }),
+  query: z.object({
+    media_type: watchlistMediaTypeSchema.optional(),
+  }),
 });
 
 export const getWatchlistSchema = z.object({
   query: z.object({
     page: z.coerce.number().int().min(1).max(500).default(1),
     language: z.string().default("en-US"),
+    media_type: watchlistMediaTypeSchema.optional(),
   }),
 });
 
+export type WatchlistMediaType = z.infer<typeof watchlistMediaTypeSchema>;
 export type AddWatchlistInput = z.infer<typeof addWatchlistSchema>["body"];
 export type GetWatchlistQuery = z.infer<typeof getWatchlistSchema>["query"];

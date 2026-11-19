@@ -22,7 +22,7 @@ export const updateHistorySchema = z.object({
     }).min(0, "duration must be non-negative"),
     progress: z.number({
       required_error: "progress is required",
-    }).min(0, "progress must be non-negative"),
+    }).min(0, "progress must be non-negative").max(100, "progress cannot exceed 100"),
     id: z.union([z.string(), z.number()]).optional(),
     mediaType: z.enum(["movie", "tv"]).default("movie"),
     season: z.number().int().min(0).nullable().optional(),
@@ -41,12 +41,24 @@ export const getHistoryItemSchema = z.object({
       .int()
       .positive("media_id must be a positive integer"),
   }),
+  query: z.object({
+    mediaType: z.enum(["movie", "tv"]).optional(),
+    season: z.coerce.number().int().min(0).optional(),
+    episode: z.coerce.number().int().min(0).optional(),
+  }),
 });
 
 export const getHistoryListSchema = z.object({
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(100).default(20),
+    mediaType: z.enum(["movie", "tv"]).optional(),
+  }),
+});
+
+export const getContinueWatchingSchema = z.object({
+  query: z.object({
+    limit: z.coerce.number().int().min(1).max(50).default(20),
     mediaType: z.enum(["movie", "tv"]).optional(),
   }),
 });
@@ -61,7 +73,12 @@ export const removeHistoryItemSchema = z.object({
       .int()
       .positive("media_id must be a positive integer"),
   }),
+  query: z.object({
+    mediaType: z.enum(["movie", "tv"]).optional(),
+  }),
 });
 
 export type UpdateHistoryInput = z.infer<typeof updateHistorySchema>["body"];
+export type GetHistoryItemQuery = z.infer<typeof getHistoryItemSchema>["query"];
 export type GetHistoryListQuery = z.infer<typeof getHistoryListSchema>["query"];
+export type GetContinueWatchingQuery = z.infer<typeof getContinueWatchingSchema>["query"];

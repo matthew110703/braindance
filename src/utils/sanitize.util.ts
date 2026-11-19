@@ -16,33 +16,39 @@ export const DEFAULT_EXCLUDED_KEYS: string[] = [
  */
 export function sanitizeResponse<T>(
   data: T,
-  keysToExclude: string[] = DEFAULT_EXCLUDED_KEYS
+  keysToExclude: string[] = DEFAULT_EXCLUDED_KEYS,
+  seen: WeakSet<object> = new WeakSet()
 ): T {
-  if (data === null || data === undefined) {
+  if (data === null || data === undefined || data instanceof Date) {
     return data;
   }
 
+  if (typeof data !== "object") {
+    return data;
+  }
+
+  if (seen.has(data as object)) {
+    return undefined as unknown as T;
+  }
+  seen.add(data as object);
+
   if (Array.isArray(data)) {
-    return data.map((item) => sanitizeResponse(item, keysToExclude)) as unknown as T;
+    return data.map((item) => sanitizeResponse(item, keysToExclude, seen)) as unknown as T;
   }
 
-  if (typeof data === "object" && data !== null) {
-    const copy: Record<string, unknown> = { ...(data as Record<string, unknown>) };
+  const copy: Record<string, unknown> = { ...(data as Record<string, unknown>) };
 
-    for (const key of keysToExclude) {
-      delete copy[key];
-    }
-
-    for (const key of Object.keys(copy)) {
-      if (typeof copy[key] === "object" && copy[key] !== null) {
-        copy[key] = sanitizeResponse(copy[key], keysToExclude);
-      }
-    }
-
-    return copy as unknown as T;
+  for (const key of keysToExclude) {
+    delete copy[key];
   }
 
-  return data;
+  for (const key of Object.keys(copy)) {
+    if (typeof copy[key] === "object" && copy[key] !== null) {
+      copy[key] = sanitizeResponse(copy[key], keysToExclude, seen);
+    }
+  }
+
+  return copy as unknown as T;
 }
 
 // Convenient alias for general usage

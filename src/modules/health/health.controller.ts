@@ -5,6 +5,45 @@ import { ApiResponse } from "../../utils/apiResponse.js";
 import { env } from "../../config/env.config.js";
 import { tmdbAdapter } from "../../adapters/tmdb.adapter.js";
 
+interface CachedTmdbProbe {
+  status: "connected" | "error";
+  authenticated: boolean;
+  checkedAt: number;
+}
+
+const TMDB_PROBE_TTL_MS = 60_000;
+let cachedTmdbProbe: CachedTmdbProbe | null = null;
+
+async function checkTmdbHealth(): Promise<{
+  status: "connected" | "error";
+  authenticated: boolean;
+}> {
+  const now = Date.now();
+  if (cachedTmdbProbe && now - cachedTmdbProbe.checkedAt < TMDB_PROBE_TTL_MS) {
+    return {
+      status: cachedTmdbProbe.status,
+      authenticated: cachedTmdbProbe.authenticated,
+    };
+  }
+
+  try {
+    const tmdbAuth = await tmdbAdapter.verifyAuthentication();
+    const result = {
+      status: (tmdbAuth.success ? "connected" : "error") as "connected" | "error",
+      authenticated: Boolean(tmdbAuth.success),
+    };
+    cachedTmdbProbe = { ...result, checkedAt: now };
+    return result;
+  } catch {
+    const result = {
+      status: "error" as const,
+      authenticated: false,
+    };
+    cachedTmdbProbe = { ...result, checkedAt: now };
+    return result;
+  }
+}
+
 export const getHealthStatus = asyncHandler(
   async (_req: Request, res: Response) => {
     const dbState = mongoose.connection.readyState;
@@ -15,29 +54,12 @@ export const getHealthStatus = asyncHandler(
       3: "disconnecting",
     };
 
-    let tmdbStatus: {
-      status: "connected" | "error";
-      authenticated: boolean;
-      error?: string;
-    };
-
-    try {
-      const tmdbAuth = await tmdbAdapter.verifyAuthentication();
-      tmdbStatus = {
-        status: tmdbAuth.success ? "connected" : "error",
-        authenticated: tmdbAuth.success,
-      };
-    } catch (error) {
-      tmdbStatus = {
-        status: "error",
-        authenticated: false,
-        error: error instanceof Error ? error.message : "TMDB connection failed",
-      };
-    }
+    const tmdbStatus = await checkTmdbHealth();
 
     const isDbHealthy = dbState === 1;
     const isTmdbHealthy = tmdbStatus.status === "connected";
     const overallStatus = isDbHealthy && isTmdbHealthy ? "healthy" : "degraded";
+    const httpStatus = overallStatus === "healthy" ? 200 : 503;
 
     const healthData = {
       environment: env.NODE_ENV,
@@ -46,13 +68,19 @@ export const getHealthStatus = asyncHandler(
       status: overallStatus,
       database: {
         status: dbStatusMap[dbState] || "unknown",
-        name: mongoose.connection.name || null,
       },
       tmdb: tmdbStatus,
     };
 
+    res.setHeader("Cache-Control", "no-store");
     res
-      .status(200)
-      .json(new ApiResponse(200, healthData, "System operational"));
+      .status(httpStatus)
+      .json(
+        new ApiResponse(
+          httpStatus,
+          healthData,
+          overallStatus === "healthy" ? "System operational" : "System degraded"
+        )
+      );
   }
 );

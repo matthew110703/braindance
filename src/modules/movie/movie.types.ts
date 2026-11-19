@@ -15,6 +15,8 @@ export interface MovieListQueryInput {
   region?: string;
 }
 
+import { AvailableServerPayload } from "../streaming/streaming.types.js";
+
 export interface Genre {
   id: number;
   name: string;
@@ -94,6 +96,7 @@ export interface TMDBMovieDetails {
   spoken_languages: SpokenLanguage[];
   belongs_to_collection: MovieCollection | null;
   credits?: TMDBCreditsResponse;
+  servers?: AvailableServerPayload[];
   [key: string]: unknown;
 }
 

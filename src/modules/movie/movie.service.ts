@@ -10,6 +10,7 @@ import {
   TMDBMovieDetailsSanitized,
 } from "./movie.types.js";
 import { TMDBMovieItem, TMDBPaginatedResponse } from "../discover/discover.types.js";
+import { streamingService } from "../streaming/streaming.service.js";
 
 import { sanitizeResponse } from "../../utils/sanitize.util.js";
 
@@ -65,16 +66,31 @@ export class MovieService {
   ): Promise<TMDBMovieDetailsSanitized> {
     const appendList = query.append_to_response
       ? Array.from(
-          new Set([...query.append_to_response.split(",").map((s) => s.trim()), "credits"])
+          new Set([
+            ...query.append_to_response
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+            "credits",
+          ])
         ).join(",")
       : "credits";
 
-    const data = await this.adapter.get<TMDBMovieDetails>(
-      `/movie/${id}`,
-      { ...query, append_to_response: appendList } as Record<string, unknown>
-    );
+    const [data, servers] = await Promise.all([
+      this.adapter.get<TMDBMovieDetails>(`/movie/${id}`, {
+        ...query,
+        append_to_response: appendList,
+      } as Record<string, unknown>),
+      streamingService.getAvailableServersForMedia({
+        type: "movie",
+        tmdbId: id,
+      }),
+    ]);
 
-    return sanitizeResponse(data) as unknown as TMDBMovieDetailsSanitized;
+    const sanitized = sanitizeResponse(data) as unknown as TMDBMovieDetailsSanitized;
+    sanitized.servers = servers;
+
+    return sanitized;
   }
 
   /**

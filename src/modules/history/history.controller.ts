@@ -2,7 +2,12 @@ import { Request, Response } from "express";
 import { historyService, HistoryService } from "./history.service.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
-import { UpdateHistoryInput, GetHistoryListQuery } from "./history.schema.js";
+import {
+  UpdateHistoryInput,
+  GetHistoryItemQuery,
+  GetHistoryListQuery,
+  GetContinueWatchingQuery,
+} from "./history.schema.js";
 
 export class HistoryController {
   constructor(private readonly service: HistoryService = historyService) {}
@@ -28,8 +33,9 @@ export class HistoryController {
   getProgress = asyncHandler(async (req: Request, res: Response) => {
     const deviceToken = req.deviceId!;
     const media_id = Number(req.params.media_id);
+    const query = req.query as unknown as GetHistoryItemQuery;
 
-    const result = await this.service.getProgress(deviceToken, media_id);
+    const result = await this.service.getProgress(deviceToken, media_id, query);
 
     res
       .status(200)
@@ -38,6 +44,27 @@ export class HistoryController {
           200,
           result,
           "Watch progress retrieved successfully"
+        )
+      );
+  });
+
+  getContinueWatching = asyncHandler(async (req: Request, res: Response) => {
+    const deviceToken = req.deviceId!;
+    const query = req.query as unknown as GetContinueWatchingQuery;
+
+    const result = await this.service.getContinueWatching(
+      deviceToken,
+      query.limit,
+      query.mediaType
+    );
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          result,
+          "Continue watching items retrieved successfully"
         )
       );
   });
@@ -62,15 +89,20 @@ export class HistoryController {
   removeFromHistory = asyncHandler(async (req: Request, res: Response) => {
     const deviceToken = req.deviceId!;
     const media_id = Number(req.params.media_id);
+    const mediaType = req.query.mediaType as "movie" | "tv" | undefined;
 
-    const result = await this.service.removeFromHistory(deviceToken, media_id);
+    const result = await this.service.removeFromHistory(
+      deviceToken,
+      media_id,
+      mediaType
+    );
 
     res
       .status(200)
       .json(
         new ApiResponse(
           200,
-          result,
+          { media_id: result.media_id, ...(mediaType ? { media_type: mediaType } : {}) },
           result.message
         )
       );
@@ -86,7 +118,7 @@ export class HistoryController {
       .json(
         new ApiResponse(
           200,
-          result,
+          null,
           result.message
         )
       );

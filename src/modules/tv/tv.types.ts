@@ -5,6 +5,7 @@ import {
   CastMember,
   CrewMember,
 } from "../movie/movie.types.js";
+import { AvailableServerPayload } from "../streaming/streaming.types.js";
 
 export type TMDBTvListResponse = TMDBPaginatedResponse<TMDBTvItem>;
 
@@ -93,6 +94,7 @@ export interface TMDBTvDetails {
   vote_count: number;
   adult: boolean;
   credits?: TMDBTvCreditsResponse;
+  servers?: AvailableServerPayload[];
   [key: string]: unknown;
 }
 
@@ -149,6 +151,7 @@ export interface TMDBTvEpisodeDetails {
   still_path: string | null;
   vote_average: number;
   vote_count: number;
+  servers?: AvailableServerPayload[];
   [key: string]: unknown;
 }
 

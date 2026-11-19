@@ -9,6 +9,24 @@ export interface TMDBErrorResponse {
   success?: boolean;
 }
 
+const RETRY_DELAYS_MS = [300, 800];
+
+const isTransientStatus = (statusCode: number): boolean =>
+  statusCode === 408 ||
+  statusCode === 429 ||
+  statusCode === 502 ||
+  statusCode === 503 ||
+  statusCode === 504;
+
+const redactParams = (params: unknown): unknown => {
+  if (!params || typeof params !== "object") return params;
+  const copy = { ...(params as Record<string, unknown>) };
+  if ("session_id" in copy) {
+    copy.session_id = "[REDACTED]";
+  }
+  return copy;
+};
+
 export class TMDBAdapter {
   public readonly client: AxiosInstance;
 
@@ -34,7 +52,7 @@ export class TMDBAdapter {
           {
             method: config.method?.toUpperCase(),
             url: `${config.baseURL || ""}${config.url || ""}`,
-            params: config.params,
+            params: redactParams(config.params),
           },
           "🎬 TMDB API Request dispatched"
         );
@@ -52,7 +70,15 @@ export class TMDBAdapter {
         return response;
       },
       (error: AxiosError<TMDBErrorResponse>) => {
-        const status = error.response?.status || 500;
+        const rawStatus = error.response?.status;
+        const isTimeout = error.code === "ECONNABORTED";
+        // Do not surface upstream TMDB 401/403 as client authentication failure
+        const status =
+          rawStatus === 401 || rawStatus === 403
+            ? 502
+            : isTimeout
+            ? 504
+            : rawStatus || 502;
         const tmdbMessage =
           error.response?.data?.status_message ||
           error.message ||
@@ -61,6 +87,7 @@ export class TMDBAdapter {
         logger.error(
           {
             status,
+            rawStatus,
             url: error.config?.url,
             tmdbStatusCode: error.response?.data?.status_code,
             message: tmdbMessage,
@@ -80,21 +107,35 @@ export class TMDBAdapter {
   }
 
   /**
-   * Perform a GET request to the TMDB API and return typed data
+   * Perform a GET request to the TMDB API with bounded retries on transient upstream failures
    */
   public async get<T = unknown>(
     url: string,
     params?: Record<string, unknown>,
     config?: AxiosRequestConfig
   ): Promise<T> {
-    const response = await this.client.get<T>(url, {
-      ...config,
-      params: {
-        ...params,
-        ...config?.params,
-      },
-    });
-    return response.data;
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+      try {
+        const response = await this.client.get<T>(url, {
+          ...config,
+          params: {
+            ...params,
+            ...config?.params,
+          },
+        });
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        const statusCode = error instanceof ApiError ? error.statusCode : 500;
+        if (attempt < RETRY_DELAYS_MS.length && isTransientStatus(statusCode)) {
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw lastError;
   }
 
   /**

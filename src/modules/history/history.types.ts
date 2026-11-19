@@ -22,12 +22,17 @@ export interface IPlaybackProgress {
   timestamp: number;
 }
 
+export interface IEpisodePlaybackProgress extends IPlaybackProgress {
+  updatedAt?: Date | string;
+}
+
 export interface HistoryItem {
   id: number;
   media_type?: "movie" | "tv";
   progress: IPlaybackProgress;
+  episodes?: Record<string, IEpisodePlaybackProgress>;
   updatedAt: Date | string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface HistoryListResponse {

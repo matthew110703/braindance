@@ -2,16 +2,20 @@ import { Request, Response } from "express";
 import { watchlistService, WatchlistService } from "./watchlist.service.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
-import { AddWatchlistInput, GetWatchlistQuery } from "./watchlist.schema.js";
+import {
+  AddWatchlistInput,
+  GetWatchlistQuery,
+  WatchlistMediaType,
+} from "./watchlist.schema.js";
 
 export class WatchlistController {
   constructor(private readonly service: WatchlistService = watchlistService) {}
 
   addToWatchlist = asyncHandler(async (req: Request, res: Response) => {
     const deviceToken = req.deviceId!;
-    const { media_id } = req.body as AddWatchlistInput;
+    const { media_id, media_type } = req.body as AddWatchlistInput;
 
-    const result = await this.service.addToWatchlist(deviceToken, media_id);
+    const result = await this.service.addToWatchlist(deviceToken, media_id, media_type);
 
     res
       .status(200)
@@ -26,9 +30,16 @@ export class WatchlistController {
 
   removeFromWatchlist = asyncHandler(async (req: Request, res: Response) => {
     const deviceToken = req.deviceId!;
-    const media_id = Number(req.params.media_id || req.body.media_id);
+    const media_id = Number(req.params.media_id ?? req.body.media_id);
+    const media_type = (req.query.media_type ?? req.body?.media_type) as
+      | WatchlistMediaType
+      | undefined;
 
-    const result = await this.service.removeFromWatchlist(deviceToken, media_id);
+    const result = await this.service.removeFromWatchlist(
+      deviceToken,
+      media_id,
+      media_type
+    );
 
     res
       .status(200)
@@ -44,8 +55,9 @@ export class WatchlistController {
   checkStatus = asyncHandler(async (req: Request, res: Response) => {
     const deviceToken = req.deviceId!;
     const media_id = Number(req.params.media_id || req.query.media_id);
+    const media_type = req.query.media_type as WatchlistMediaType | undefined;
 
-    const result = await this.service.checkStatus(deviceToken, media_id);
+    const result = await this.service.checkStatus(deviceToken, media_id, media_type);
 
     res
       .status(200)
