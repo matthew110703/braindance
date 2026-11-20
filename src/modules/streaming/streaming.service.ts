@@ -37,7 +37,7 @@ const DEFAULT_FALLBACK_SERVER: Pick<
     controlBg: "solid",
     mobileSheets: true,
   },
-  quality: "4K Direct HLS",
+  quality: "Adaptive HLS • Ad-Free",
   priority: 1,
 };
 
@@ -77,7 +77,7 @@ export class StreamingService {
           },
           isActive: true,
           priority: 1,
-          quality: "4K Direct HLS",
+          quality: "Adaptive HLS • Ad-Free",
         },
         {
           id: "vidrift",
@@ -98,7 +98,7 @@ export class StreamingService {
           },
           isActive: true,
           priority: 2,
-          quality: "4K HLS",
+          quality: "Adaptive HLS",
         },
       ];
 
@@ -243,7 +243,7 @@ export class StreamingService {
           DEFAULT_FALLBACK_SERVER as IStreamingServerDoc,
           options
         ),
-        quality: DEFAULT_FALLBACK_SERVER.quality || "4K Direct HLS",
+        quality: DEFAULT_FALLBACK_SERVER.quality || "Adaptive HLS • Ad-Free",
         priority: DEFAULT_FALLBACK_SERVER.priority,
         isRecommended: true,
       },

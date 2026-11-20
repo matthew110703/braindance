@@ -36,7 +36,7 @@ export const createServerSchema = z.object({
     defaultParams: vidriftParamsSchema.default({}),
     isActive: z.boolean().default(true),
     priority: z.number().int().min(1).default(1),
-    quality: z.string().default("4K HLS"),
+    quality: z.string().default("Adaptive HLS"),
   }),
 });
 
