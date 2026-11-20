@@ -134,22 +134,26 @@ function extractSubtitleTracks(html: string): ResolvedDirectStream["subtitles"] 
   }
 }
 
-function fetchRawHtml(url: string): Promise<{ status: number; data: string }> {
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+} as const;
+
+function fetchRawHtmlHttps(url: string): Promise<{ status: number; data: string }> {
   return new Promise((resolve, reject) => {
     const req = https
       .get(
         url,
         {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            Accept:
-              "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-          },
+          headers: BROWSER_HEADERS,
           timeout: 10000,
         },
         (res) => {
+          // Node's https.get does not follow redirects; treat 3xx as non-success
+          // so the fetch()-based path / relay can retry with redirect following.
           let data = "";
           res.setEncoding("utf8");
           res.on("data", (chunk: string) => {
@@ -163,6 +167,71 @@ function fetchRawHtml(url: string): Promise<{ status: number; data: string }> {
       })
       .on("error", (err) => reject(err));
   });
+}
+
+async function fetchRawHtmlFollow(url: string, timeoutMs = 12000): Promise<{ status: number; data: string }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: BROWSER_HEADERS,
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    const data = await res.text();
+    return { status: res.status, data };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Datacenter IPs (Render/Vercel) often get Cloudflare 403 on embed.vidrift.net.
+ * Google Translate fetches the page from Google's network and mirrors HTML that
+ * still contains embedMeta / Orion URLs.
+ */
+async function fetchViaTranslateRelay(embedUrl: string): Promise<{ status: number; data: string }> {
+  const relayUrl =
+    "https://translate.google.com/translate?sl=auto&tl=en&u=" +
+    encodeURIComponent(embedUrl);
+  return fetchRawHtmlFollow(relayUrl, 15000);
+}
+
+async function fetchEmbedHtml(embedUrl: string): Promise<{ status: number; data: string; via: string }> {
+  // 1) Direct (works from residential / unblocked egress)
+  try {
+    const direct = await fetchRawHtmlFollow(embedUrl);
+    if (direct.status === 200 && /embedMeta|\/api\/orion\//.test(direct.data)) {
+      return { ...direct, via: "direct" };
+    }
+    if (direct.status === 200 && direct.data.length > 1000) {
+      return { ...direct, via: "direct" };
+    }
+
+    // 2) Translate relay when Cloudflare blocks datacenter IPs (403/etc.)
+    if (direct.status !== 200) {
+      const relayed = await fetchViaTranslateRelay(embedUrl);
+      if (relayed.status === 200 && /embedMeta|\/api\/orion\//.test(relayed.data)) {
+        return { ...relayed, via: "translate-relay" };
+      }
+      return { ...direct, via: "direct" };
+    }
+  } catch {
+    // fall through to https.get / relay
+  }
+
+  // 3) Legacy https.get fallback, then relay
+  try {
+    const legacy = await fetchRawHtmlHttps(embedUrl);
+    if (legacy.status === 200 && /embedMeta|\/api\/orion\//.test(legacy.data)) {
+      return { ...legacy, via: "https.get" };
+    }
+  } catch {
+    // ignore
+  }
+
+  const relayed = await fetchViaTranslateRelay(embedUrl);
+  return { ...relayed, via: "translate-relay" };
 }
 
 export class VidriftDirectService {
@@ -190,14 +259,19 @@ export class VidriftDirectService {
       options.episode ?? 1
     );
 
-    const { status, data: html } = await fetchRawHtml(embedUrl);
+    const { status, data: html, via } = await fetchEmbedHtml(embedUrl);
     if (status !== 200) {
-      throw new ApiError(502, `Upstream error: ${status}`);
+      throw new ApiError(502, `Upstream error: ${status}`, [
+        `via:${via}`,
+        `embed:${embedUrl}`,
+      ]);
     }
 
     const candidates = extractStreamCandidates(html);
     if (candidates.length === 0) {
-      throw new ApiError(404, "No direct stream found in upstream manifest");
+      throw new ApiError(404, "No direct stream found in upstream manifest", [
+        `via:${via}`,
+      ]);
     }
 
     const best = candidates[0];

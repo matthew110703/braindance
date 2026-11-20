@@ -112,8 +112,12 @@ export const errorHandlerMiddleware: ErrorRequestHandler = (
     );
   }
 
+  // Preserve intentional upstream/client-facing ApiError messages (e.g. 502 Upstream error: 403).
+  // Only mask unexpected 500s in production.
   const publicMessage =
-    error.statusCode >= 500 && env.NODE_ENV === "production"
+    error.statusCode >= 500 &&
+    env.NODE_ENV === "production" &&
+    !(err instanceof ApiError)
       ? "Internal server error"
       : error.message;
 
