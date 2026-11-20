@@ -6,7 +6,9 @@ import {
   CreateServerBody,
   UpdateServerBody,
   ResolveEmbedUrlQuery,
+  ResolveDirectStreamQuery,
 } from "./streaming.schema.js";
+import { vidriftDirectService } from "./vidriftDirect.service.js";
 
 export class StreamingController {
   constructor(private readonly service: StreamingService = streamingService) {}
@@ -75,6 +77,20 @@ export class StreamingController {
         "Stream embed URL resolved successfully"
       )
     );
+  });
+
+  resolveDirectStream = asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query as unknown as ResolveDirectStreamQuery;
+    const resolved = await vidriftDirectService.resolveDirectStream({
+      type: query.type,
+      tmdbId: query.tmdbId,
+      season: query.season,
+      episode: query.episode,
+    });
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, resolved, "Direct HLS stream resolved successfully"));
   });
 }
 

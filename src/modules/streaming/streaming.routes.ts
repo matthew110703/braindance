@@ -8,6 +8,7 @@ import {
   updateServerSchema,
   serverIdParamSchema,
   resolveEmbedUrlSchema,
+  resolveDirectStreamSchema,
 } from "./streaming.schema.js";
 
 const requireAdminIfConfigured = (
@@ -42,6 +43,13 @@ router.get(
   "/resolve",
   validate(resolveEmbedUrlSchema),
   streamingController.resolveEmbedUrl
+);
+
+// Direct HLS (scrape VidRift embed HTML without browser Origin)
+router.get(
+  "/direct",
+  validate(resolveDirectStreamSchema),
+  streamingController.resolveDirectStream
 );
 
 // Server CRUD endpoints

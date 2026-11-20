@@ -85,6 +85,16 @@ export const resolveEmbedUrlSchema = z.object({
     ),
 });
 
+export const resolveDirectStreamSchema = z.object({
+  query: z.object({
+    type: z.enum(["movie", "tv"]),
+    tmdbId: z.coerce.number().int().positive(),
+    season: z.coerce.number().int().positive().default(1),
+    episode: z.coerce.number().int().positive().default(1),
+  }),
+});
+
 export type CreateServerBody = z.infer<typeof createServerSchema>["body"];
 export type UpdateServerBody = z.infer<typeof updateServerSchema>["body"];
 export type ResolveEmbedUrlQuery = z.infer<typeof resolveEmbedUrlSchema>["query"];
+export type ResolveDirectStreamQuery = z.infer<typeof resolveDirectStreamSchema>["query"];
